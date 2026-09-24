@@ -4882,3 +4882,18 @@ body.is-text-editing [data-e]:focus {
     .edit-bar { display: none !important; }
     [data-e] { outline: none !important; background: none !important; }
 }
+
+/* Caroline Dubois (right ambassador) — her cut-out is framed tighter
+   (waist-up) than the MVP bodyshots, so her frame is taller and wider to
+   match Fabian Edwards' scale, sits higher, and fades out behind the card.
+   Centre point is unchanged so the name card stays aligned under her. */
+.amb-hero-right {
+    height: 92%;
+    bottom: 4%;
+    width: 600px;
+    right: calc(8% - 60px);
+}
+.amb-hero-right {
+    -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
+}
