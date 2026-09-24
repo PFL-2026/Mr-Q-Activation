@@ -4889,7 +4889,7 @@ body.is-text-editing [data-e]:focus {
    Centre point is unchanged so the name card stays aligned under her. */
 .amb-hero-right {
     height: 92%;
-    bottom: 4%;
+    bottom: 8%;            /* waistband level with the name on her card */
     width: 600px;
     right: calc(8% - 60px);
 }
