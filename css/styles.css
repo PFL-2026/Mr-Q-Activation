@@ -1,4 +1,4 @@
-/* PFL × MrQ Activation Strategy 2026 — Stylesheet */
+/* MVP × Mr Q Activation Strategy 2026 — Stylesheet */
 :root {
     --pfl-navy: #052383;
     --pfl-navy-deep: #030f3d;
@@ -9,7 +9,7 @@
     --pfl-bg: #06091a;
     --pfl-bg-2: #0a1228;
 
-    /* MrQ blue — sampled from the supplied MrQ wordmark (#0a2ecc).
+    /* Mr Q blue — sampled from the supplied Mr Q wordmark (#0a2ecc).
        --ls-green-bright is a lifted tint for accent text on the dark UI.
        Variable names kept as --ls-* so all existing references update at once. */
     --ls-green: #0a2ecc;
@@ -367,7 +367,7 @@ html, body {
     100% { transform: translateX(280%); opacity: 0; }
 }
 
-/* PFL chain-link side decoration (from brand guidelines) */
+/* MVP chain-link side decoration (from brand guidelines) */
 .chain-deco {
     position: absolute;
     top: 0; bottom: 0;
@@ -801,7 +801,7 @@ html, body {
     object-fit: cover;
     transition: transform 8s ease-out;
 }
-/* Slide 5 — show the whole cage image (more MrQ logos visible) */
+/* Slide 5 — show the whole cage image (more Mr Q logos visible) */
 .content-visual.cage-fit img {
     object-fit: contain;
     background: #06091a;
@@ -827,7 +827,7 @@ html, body {
 }
 
 /* Frame fills the panel — taller coverage so the interface occupies more of
-   the page vertically. The interface image covers the frame; the MrQ
+   the page vertically. The interface image covers the frame; the Mr Q
    branding band stays visible at the top via object-position. */
 .wb-frame {
     position: relative;
@@ -843,7 +843,7 @@ html, body {
     width: 100%;
     height: 100%;
     object-fit: cover;       /* fill the panel vertically */
-    object-position: left top;  /* anchor left so the MrQ logo (top-left) stays visible */
+    object-position: left top;  /* anchor left so the Mr Q logo (top-left) stays visible */
     user-select: none;
     pointer-events: none;
 }
@@ -1306,7 +1306,7 @@ html, body {
     padding: 24px 30px;
     box-sizing: border-box;
 }
-/* MrQ social-series creatives are landscape (2.19 and 1.71), so they
+/* Mr Q social-series creatives are landscape (2.19 and 1.71), so they
    stack vertically instead of sitting side by side. Each max-height is its
    share of the column proportional to 1/aspect-ratio, which makes the two
    render at identical widths whether width or height is the binding
@@ -1322,7 +1322,7 @@ html, body {
     box-shadow: 0 14px 38px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.06);
     display: block;
 }
-/* Flat MrQ social-series composite (replaces the built HTML IG feed) */
+/* Flat Mr Q social-series composite (replaces the built HTML IG feed) */
 .content-visual img.ig-series-img {
     width: 100%;
     height: 100%;
@@ -2224,7 +2224,7 @@ html, body {
 .bcast-partner > img.bcast-logo-lg {
     padding: 4px 8px;
 }
-/* MrQ broadcast watermark (TV bug, top-right of feed) */
+/* Mr Q broadcast watermark (TV bug, top-right of feed) */
 .bcast-screen img.bcast-watermark {
     position: absolute;
     top: 16px;
@@ -4747,7 +4747,7 @@ body.terms-edit-available .terms-modal-edit.is-active {
     .edit-toast { display: none !important; }
 }
 
-/* === Commercials modal header lockup (PFL × MrQ) === */
+/* === Commercials modal header lockup (MVP × Mr Q) === */
 .terms-modal-lockup {
     display: flex;
     align-items: center;
@@ -4763,8 +4763,8 @@ body.terms-edit-available .terms-modal-edit.is-active {
     object-fit: contain;
     image-rendering: -webkit-optimize-contrast;
 }
-/* Matches the topbar's optical balance: the PFL mark carries a crown, so it
-   needs marginally more height than the MrQ wordmark to read level. */
+/* Matches the topbar's optical balance: the MVP mark carries a crown, so it
+   needs marginally more height than the Mr Q wordmark to read level. */
 .terms-modal-lockup img:first-of-type { height: 30px; }
 .terms-modal-lockup img:last-of-type { height: 29px; }
 .terms-modal-lockup-x {
@@ -4815,5 +4815,70 @@ body.terms-edit-available .terms-modal-edit.is-active {
     transform: scaleX(0);
 }
 
-/* MrQ — brand name keeps its own casing inside uppercase labels */
+/* Mr Q — brand name keeps its own casing inside uppercase labels */
 .brand-name { text-transform: none; }
+
+/* === In-deck text editing (only with ?edit in the URL) ================
+   Hidden by default so the partner-facing deck is visually unchanged. */
+.edit-bar { display: none; }
+body.edit-available .edit-bar {
+    position: fixed;
+    left: 18px;
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(8, 12, 30, 0.94);
+    box-shadow: 0 10px 34px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-family: var(--font-cond);
+    white-space: nowrap;
+}
+.edit-bar-btn {
+    font: 600 13px/1 var(--font-cond);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #fff;
+    background: var(--ls-green);
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 9px 16px;
+    cursor: pointer;
+}
+.edit-bar-btn:hover { background: var(--ls-green-bright); }
+.edit-bar-btn[aria-pressed="true"] { background: #fff; color: var(--ls-green); }
+.edit-bar-ghost { background: transparent; border-color: rgba(255, 255, 255, 0.22); color: rgba(255, 255, 255, 0.8); }
+.edit-bar-ghost:hover { background: rgba(255, 255, 255, 0.08); }
+.edit-bar-status {
+    font: 500 12px/1.2 var(--font-body);
+    color: rgba(255, 255, 255, 0.7);
+    padding: 0 8px 0 4px;
+}
+body.edit-dirty .edit-bar-status { color: var(--ls-green-bright); }
+
+body.is-text-editing [data-e] {
+    outline: 1px dashed rgba(255, 255, 255, 0.28);
+    outline-offset: 3px;
+    cursor: text;
+    -webkit-user-select: text;
+    user-select: text;
+    pointer-events: auto;
+    /* Chrome's contenteditable UA style breaks long words mid-word */
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    line-break: auto !important;
+}
+body.is-text-editing [data-e]:hover { outline-color: var(--ls-green-bright); }
+body.is-text-editing [data-e]:focus {
+    outline: 2px solid var(--ls-green-bright);
+    background: rgba(62, 98, 255, 0.08);
+}
+@media print {
+    .edit-bar { display: none !important; }
+    [data-e] { outline: none !important; background: none !important; }
+}

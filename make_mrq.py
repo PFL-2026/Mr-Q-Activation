@@ -113,11 +113,24 @@ def _solid(alpha, rgb):
 def build_logos():
     logo_dir = OUT / "assets" / "logos"
     alpha = _mrq_alpha()
-    # Dark UI surfaces carry the wordmark reversed out in white; brand blue
-    # copy kept alongside for any light surface.
-    _solid(alpha, (255, 255, 255)).save(logo_dir / "mrq.png", optimize=True)
-    _solid(alpha, (255, 255, 255)).save(logo_dir / "mrq-white.png", optimize=True)
-    _solid(alpha, MQ_BLUE_RGB).save(logo_dir / "mrq-blue.png", optimize=True)
+    # Round 4: Mr Q runs in its supplied brand blue everywhere (one file).
+    _solid(alpha, MQ_BLUE_RGB).save(logo_dir / "mrq.png", optimize=True)
+
+    # MVP wordmark: supplied white-on-black JPEG -> white with alpha
+    m = np.asarray(Image.open(AS / "r4" / "mvp_logo.jpeg").convert("L")).astype(float)
+    a = np.clip((m - 40) / (235 - 40), 0, 1)
+    a = (a * 255).round().astype("uint8")
+    ys, xs = np.nonzero(a > 8)
+    a = a[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+    mvp = _solid(a, (255, 255, 255))
+    mvp.save(OUT / "assets" / "images" / "mvp_logo.png", optimize=True)
+    ar = np.asarray(mvp)
+    check(ar[..., 3].mean() > 60 and ar[0, 0, 3] == 0, "mvp_logo.png keyed (white on alpha)")
+    for name in ("pfl_logo.png", "pfl_logo_white.png"):
+        q = OUT / "assets" / "images" / name
+        if q.exists():
+            q.unlink()
+        check(not q.exists(), f"retired PFL logo: {name}")
 
     # --- Sky Sports: white plate keyed out, navy "sky" reversed to white,
     # red "sports" plate (with its white lettering) kept as supplied.
@@ -152,12 +165,13 @@ def build_logos():
     check(((ar[..., 2] > ar[..., 0] + 40) & (ar[..., 3] > 200)).sum() < 50,
           "sky-sports.png has no residual navy")
 
-    for name in ("netbet.png", "netbet-white.png", "rmc-sport.png", "youtube.png"):
+    for name in ("netbet.png", "netbet-white.png", "rmc-sport.png", "youtube.png",
+                 "mrq-white.png", "mrq-blue.png"):
         p = logo_dir / name
         if p.exists():
             p.unlink()
         check(not p.exists(), f"retired logo: {name}")
-    for name in ("mrq.png", "mrq-white.png", "mrq-blue.png", "sky-sports.png"):
+    for name in ("mrq.png", "sky-sports.png"):
         p = logo_dir / name
         check(p.exists() and Image.open(p).mode == "RGBA", f"logo written w/ alpha: {name}")
     print("  logos: mrq, mrq-white, mrq-blue, sky-sports (rmc-sport, youtube retired)")
@@ -234,7 +248,7 @@ def build_images():
 
     # Baked-in NetBet lockups (painted by the NetBet build) -> MrQ lockups,
     # same bands, same deterministic fill/grain treatment.
-    logo = _solid(_mrq_alpha(), (255, 255, 255))
+    logo = _solid(_mrq_alpha(), MQ_BLUE_RGB)       # round 4: blue Mr Q lockups
     font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 
     p = img_dir / "social_grid.jpg"
@@ -276,7 +290,7 @@ def build_images():
         px[x, y] = (max(0, r + n), max(0, g + n), max(0, b + n))
     lg = logo.copy()
     lg.thumbnail((520, 66), Image.LANCZOS)
-    lg.putalpha(lg.getchannel("A").point(lambda v: int(v * 0.68)))
+    lg.putalpha(lg.getchannel("A").point(lambda v: int(v * 0.92)))
     for i in range(4):
         cx = int(w * (i + 0.5) / 4)
         im.paste(lg, (cx - lg.width // 2, (y0 + y1) // 2 - lg.height // 2), lg)
@@ -289,6 +303,57 @@ def build_images():
         check(red.sum() < 30, f"{name}: NetBet red cleared from band ({red.sum()}px)")
     print(f"  images: {renamed} netbet_* renamed to mrq_*, 4 orphans deleted, "
           "2 baked-in lockups repainted")
+
+# MrQ photography (Archive.zip) -> target filename. Mapped by content.
+PHOTO_MAP = {
+    "Brand Awareness and Cage Branding.png": ["mrq_brand_awareness.jpg",   # slide 2, pillar 01
+                                              "mrq_cage_branding.jpg"],    # slide 6
+    "Mr Q Acquisition.png":        ["mrq_acquisition.jpg"],          # slide 2, pillar 02
+    "Integrated Content.png":      ["mrq_integrated_content.jpg"],   # slide 2, pillar 03
+    "Center Canvas.png":           ["mrq_centre_canvas.jpg"],        # slide 5
+    "Prediction Walkout.png":      ["mrq_prediction_walkouts.jpg"],  # slide 9
+    "Social Series 1.png":         ["mrq_social_port_1.jpg"],        # slide 11, By the Numbers
+    "Social Series 2.png":         ["mrq_social_port_2.jpg"],        # slide 11, 24-4 Shabily
+    "Mr Q Live Odds.png":          ["mrq_live_odds_cutin.jpg"],      # slide 12
+    "Watch + Bet background.png":  ["mrq_watch_bet.png"],            # slide 14
+    "Mr Q Highlights.png":         ["mrq_highlights.jpg"],           # slide 15
+    "T shirt.png":                 ["mrq_tshirt.jpg"],               # slide 8
+    "Cap.png":                     ["mrq_cap.jpg"],
+    "Mr Q Hoodie.png":             ["mrq_hoodie.jpg"],
+    "Mr Q shorts.png":             ["mrq_shorts.jpg"],
+    "Social Integration.png":      ["mrq_social_integration.jpg"],   # slide 10 (round 4)
+}
+WATCH_BET_MAX_W = 2400   # supplied at 3450px; the panel never renders that wide
+
+
+def build_photos():
+    img_dir = OUT / "assets" / "images"
+    src_dir = AS / "photos"
+    n = 0
+    for src_name, targets in PHOTO_MAP.items():
+        src = src_dir / src_name
+        check(src.exists(), f"photo supplied: {src_name}")
+        if not src.exists():
+            continue
+        im = Image.open(src)
+        for target in targets:
+            dst = img_dir / target
+            check(dst.exists(), f"photo target exists in deck: {target}")
+            if target.endswith(".png"):
+                out = im.convert("RGB")
+                if out.width > WATCH_BET_MAX_W:
+                    out = out.resize((WATCH_BET_MAX_W,
+                                      round(out.height * WATCH_BET_MAX_W / out.width)),
+                                     Image.LANCZOS)
+                out.save(dst, "PNG", optimize=True)
+            else:
+                im.convert("RGB").save(dst, "JPEG", quality=88, optimize=True,
+                                       progressive=True)
+            got = Image.open(dst)
+            ratio_ok = abs(got.width / got.height - im.width / im.height) < 0.01
+            check(ratio_ok, f"{target}: aspect matches supplied {src_name}")
+            n += 1
+    print(f"  photos: {n} deck images replaced from {len(PHOTO_MAP)} supplied files")
 
 
 def build_video():
@@ -552,6 +617,222 @@ def build_js():
 
 
 # ---------------------------------------------------------------------------
+# 5b. Round 4 — MVP x Mr Q
+# ---------------------------------------------------------------------------
+
+AMB_FE = {  # Fabian Edwards replaces Antonio Carlos Jr. (left)
+    "img_old": "https://pflmma-prod.s3.amazonaws.com/fighters/bodyshots/ba5216de863796dc313092bd7777cc81-1-1.png",
+    "img_new": "https://pflmma-prod.s3.amazonaws.com/fighters/bodyshots/97d927d1ef30e310cbac2613bccaf334-1-1.png",
+}
+AMB_CD = {  # Caroline Dubois replaces Taylor Lapilus (right)
+    "img_old": "https://pflmma-prod.s3.amazonaws.com/fighters/bodyshots/9cf13eefc6ab3bd880106403a12e79ce-2-1.png",
+    "img_new": "https://www.mostvaluablepromotions.com/wp-content/uploads/2026/03/MVP-Caroline-Dubois-Profile-1.webp",
+}
+
+
+def build_round4():
+    p = OUT / "index.html"
+    h = p.read_text(encoding="utf-8")
+
+    # --- remove Broadcast + Social detail buttons and pop-ups -------------
+    for which in ("broadcast", "social"):
+        h = cut(h, f'    <button type="button" class="dist-trigger" data-open-dist-modal="{which}DistModal">',
+                "    </button>\n", f"remove {which} detail button")
+    h = cut(h, "<!-- Broadcast Distribution Modal", "<!-- Social Distribution Modal",
+            "remove broadcast pop-up", include_end=False)
+    h = cut(h, "<!-- Social Distribution Modal", "<!-- FGC Detail Modal",
+            "remove social pop-up", include_end=False)
+
+    # --- ambassadors -------------------------------------------------------
+    h = rep(h, AMB_FE["img_old"], AMB_FE["img_new"], "Fabian Edwards image")
+    h = rep(h, AMB_CD["img_old"], AMB_CD["img_new"], "Caroline Dubois image")
+    h = rep(h, '<div class="full">Antonio Carlos Jr.</div>', '<div class="full">Fabian Edwards</div>',
+            "Fabian Edwards name")
+    h = rep(h, '<div class="country">BRA · Light Heavyweight Champion</div>',
+            '<div class="country">GBR · Middleweight</div>', "Fabian Edwards detail line")
+    h = rep(h, 'href="https://www.instagram.com/caradesapato/" target="_blank" rel="noopener noreferrer" aria-label="Antonio Carlos Jr. on Instagram"',
+            'href="https://www.instagram.com/fabian_edwardsmma/?hl=en" target="_blank" rel="noopener noreferrer" aria-label="Fabian Edwards on Instagram"',
+            "Fabian Edwards IG link")
+    h = rep(h, "<span>@caradesapato</span>\n            <span class=\"amb-ig-followers\">2M</span>",
+            "<span>@fabian_edwardsmma</span>\n            <span class=\"amb-ig-followers\">86K</span>",
+            "Fabian Edwards handle + followers")
+    h = rep(h, '<div class="full">Taylor Lapilus</div>', '<div class="full">Caroline Dubois</div>',
+            "Caroline Dubois name")
+    h = rep(h, '<div class="country">FRA · Bantamweight Contender</div>',
+            '<div class="country">GBR · Lightweight</div>', "Caroline Dubois detail line")
+    h = rep(h, 'href="https://www.instagram.com/taylor_d.i_lapilus/" target="_blank" rel="noopener noreferrer" aria-label="Taylor Lapilus on Instagram"',
+            'href="https://www.instagram.com/__carolinedubois1/?hl=en" target="_blank" rel="noopener noreferrer" aria-label="Caroline Dubois on Instagram"',
+            "Caroline Dubois IG link")
+    h = rep(h, "<span>@taylor_d.i_lapilus</span>\n            <span class=\"amb-ig-followers\">61K</span>",
+            "<span>@__carolinedubois1</span>\n            <span class=\"amb-ig-followers\">137K</span>",
+            "Caroline Dubois handle + followers")
+
+    # --- stats -------------------------------------------------------------
+    h = rep(h, '<div class="stat-card"><div class="num">2</div><div class="label">PFL Events across territories</div></div>',
+            '<div class="stat-card"><div class="num">3</div><div class="label">Events in the UK</div></div>',
+            "slide 4 events stat")
+    h = rep(h, '<div class="stat-card"><div class="num">450k</div><div class="label">Average Unique Viewers</div></div>',
+            '<div class="stat-card"><div class="num">420k</div><div class="label">Average Unique Viewers Per Event</div></div>',
+            "slide 4 viewers stat")
+    h = rep(h, '<div class="stat-card"><div class="num">2.7M</div><div class="label">Followers Reached</div></div>',
+            '<div class="stat-card"><div class="num">2.9M</div><div class="label">Followers Reached</div></div>',
+            "slide 10 followers stat")
+
+    # --- logos ---------------------------------------------------------------
+    h = h.replace("assets/images/pfl_logo_white.png", "assets/images/mvp_logo.png")
+    h = h.replace("assets/images/pfl_logo.png", "assets/images/mvp_logo.png")
+    h = h.replace("assets/logos/mrq-white.png", "assets/logos/mrq.png")
+
+    # --- naming: PFL -> MVP, MrQ -> Mr Q (text only; no data: URIs here) ----
+    check("data:" not in h, "index.html still free of data: URIs")
+    h = rep(h, "Professional Fighters League", "Most Valuable Promotions", "close slide wordmark")
+    h = re.sub(r"\bPFL\b", "MVP", h)
+    h = re.sub(r"\bMrQ\b", "Mr Q", h)
+    p.write_text(h, encoding="utf-8")
+
+    j = OUT / "js" / "deck.js"
+    js = j.read_text(encoding="utf-8")
+    js = re.sub(r"\bPFL\b", "MVP", js)
+    js = re.sub(r"\bMrQ\b", "Mr Q", js)
+    j.write_text(js, encoding="utf-8")
+
+    c = OUT / "css" / "styles.css"
+    css = c.read_text(encoding="utf-8")
+    css = re.sub(r"\bPFL\b", "MVP", css)
+    css = re.sub(r"\bMrQ\b", "Mr Q", css)
+    c.write_text(css, encoding="utf-8")
+
+    vis = re.sub(r"<script.*?</script>|<style.*?</style>", "", h, flags=re.S)
+    check(not re.search(r"\bPFL\b|Professional Fighters", vis), "no PFL references left in deck text")
+    check(not re.search(r"\bMrQ\b", h + js), "no 'MrQ' spellings left")
+    check("dist-trigger\"" not in h and "DistModal" not in h, "no distribution buttons / pop-ups left")
+    check("Antonio" not in h and "Lapilus" not in h, "old ambassadors gone")
+    # bg_dark.jpg carries four small red PFL crowns in its corners — patch
+    # each with the neighbouring background texture (shifted inward).
+    bgp = OUT / "assets" / "images" / "bg_dark.jpg"
+    im = Image.open(bgp).convert("RGB")
+    W, H = im.size
+    for x0, y0 in ((19, 15), (1390, 15), (19, 767), (1390, 767)):
+        w_, h_ = 48, 34
+        dx = 70 if x0 < W / 2 else -70
+        patch = im.crop((x0 + dx, y0, x0 + dx + w_, y0 + h_))
+        im.paste(patch, (x0, y0))
+    im.save(bgp, "JPEG", quality=92, optimize=True)
+    a = np.asarray(Image.open(bgp).convert("RGB")).astype(int)
+    red = (a[..., 0] > 120) & (a[..., 0] > a[..., 1] * 2) & (a[..., 0] > a[..., 2] * 2)
+    check(red.sum() < 20, f"bg_dark.jpg: PFL corner crowns removed ({red.sum()}px red)")
+
+    print("  round 4: pop-ups removed, ambassadors swapped, stats updated, MVP / Mr Q naming")
+
+
+# ---------------------------------------------------------------------------
+# 6b. Text editing (opt-in via ?edit)
+# ---------------------------------------------------------------------------
+
+from html.parser import HTMLParser
+
+INLINE_TAGS = {"span", "strong", "em", "b", "i", "br", "small", "sup", "sub", "u", "wbr"}
+VOID_TAGS = {"br", "img", "input", "source", "meta", "link", "hr", "wbr", "area",
+             "base", "col", "embed", "track", "param"}
+EXCLUDE_TAGS = {"button", "a", "nav", "script", "style", "svg", "video", "select",
+                "textarea", "option", "header", "iframe"}
+EXCLUDE_CLASSES = {"slide-num", "slide-counter", "dist-trigger", "sbia-btn",
+                   "wb-live-pill", "bcast-live-pip"}
+
+
+class _Tagger(HTMLParser):
+    """Find maximal text blocks whose content is only text + inline tags,
+    inside the slides (#deck) and the distribution pop-ups (.dist-modal)."""
+
+    def __init__(self, src):
+        super().__init__(convert_charrefs=True)
+        self.line_off = [0]
+        for line in src.splitlines(keepends=True):
+            self.line_off.append(self.line_off[-1] + len(line))
+        self.stack = []
+        self.found = []
+
+    def _off(self):
+        ln, col = self.getpos()
+        return self.line_off[ln - 1] + col
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        cls = set((a.get("class") or "").split())
+        parent = self.stack[-1] if self.stack else None
+        in_scope = (parent["in_scope"] if parent else False) or a.get("id") == "deck" \
+            or "dist-modal" in cls
+        excluded = (parent["excluded"] if parent else False) or tag in EXCLUDE_TAGS \
+            or bool(cls & EXCLUDE_CLASSES) or "data-e" in a
+        node = {"tag": tag, "off": self._off(), "in_scope": in_scope, "excluded": excluded,
+                "pure": True, "text": False, "cands": []}
+        if tag in VOID_TAGS:
+            if parent and tag not in INLINE_TAGS:
+                parent["pure"] = False
+            return
+        self.stack.append(node)
+
+    def handle_startendtag(self, tag, attrs):
+        parent = self.stack[-1] if self.stack else None
+        if parent and tag not in INLINE_TAGS:
+            parent["pure"] = False
+
+    def handle_data(self, data):
+        if self.stack and data.strip():
+            self.stack[-1]["text"] = True
+
+    def handle_endtag(self, tag):
+        if tag in VOID_TAGS or not self.stack:
+            return
+        # tolerate stray closers: pop to the matching open tag
+        while self.stack and self.stack[-1]["tag"] != tag:
+            self._close(self.stack.pop())
+        if self.stack:
+            self._close(self.stack.pop())
+
+    def _close(self, node):
+        ok = node["pure"] and node["text"] and node["in_scope"] and not node["excluded"]
+        cands = [node] if ok else node["cands"]
+        parent = self.stack[-1] if self.stack else None
+        if parent is None:
+            self.found.extend(cands)
+            return
+        if node["tag"] not in INLINE_TAGS or not node["pure"]:
+            parent["pure"] = False
+        parent["text"] = parent["text"] or node["text"]
+        parent["cands"].extend(cands)
+
+
+def build_editing():
+    p = OUT / "index.html"
+    h = p.read_text(encoding="utf-8")
+    t = _Tagger(h)
+    t.feed(h)
+    t.close()
+    while t.stack:
+        t._close(t.stack.pop())
+    blocks = sorted(t.found, key=lambda n: n["off"])
+    check(len(blocks) > 100, f"editable text blocks tagged ({len(blocks)})")
+    for i, n in enumerate(reversed(blocks)):
+        idx = len(blocks) - i
+        at = n["off"] + 1 + len(n["tag"])
+        check(h[n["off"]:at] == "<" + n["tag"], f"tag insertion point valid (block {idx})")
+        h = h[:at] + f' data-e="{idx}"' + h[at:]
+    ids = re.findall(r' data-e="(\d+)"', h)
+    check(ids == [str(i) for i in range(1, len(blocks) + 1)], "data-e ids sequential + unique")
+
+    h = rep(h, '<script src="js/deck.js?v=', '<script src="js/edit.js?v=pending" defer></script>\n'
+            '<script src="js/deck.js?v=', "inject edit.js")
+    p.write_text(h, encoding="utf-8")
+
+    shutil.copy2(AS / "edit.js", OUT / "js" / "edit.js")
+    css = OUT / "css" / "styles.css"
+    css.write_text(css.read_text(encoding="utf-8") + (AS / "edit.css").read_text(encoding="utf-8"),
+                   encoding="utf-8")
+    print(f"  editing: {len(blocks)} text blocks tagged, edit.js wired (opt-in via ?edit)")
+
+
+# ---------------------------------------------------------------------------
 # 7. Audit + cache bust
 # ---------------------------------------------------------------------------
 
@@ -568,9 +849,8 @@ def audit():
         check(s not in h, f"html free of '{s}'")
     # Slide 4 + its broadcast pop-up: no France / RMC / YouTube left
     s4 = h[h.index('data-slide="4"'):h.index('data-slide="5"')]
-    bm = h[h.index('id="broadcastDistModal"'):h.index('id="socialDistModal"')]
     for s in ("France", "FR &middot;", "RMC", "YouTube", "French"):
-        check(s not in s4 and s not in bm, f"slide 4 + broadcast modal free of '{s}'")
+        check(s not in s4, f"slide 4 free of '{s}'")
     check("Commercials" not in j and "wristbandModal" not in j, "js free of commercials/wristband code")
 
     nums = [int(n) for n in re.findall(r'<section class="slide[^"]*" data-slide="(\d+)"', h)]
@@ -581,7 +861,7 @@ def audit():
     check(h.count('class="bcast-partner"') == 2, "slide 4 has exactly two broadcast boxes")
     check('bcast-country">Boxing<' in h and 'bcast-country">MMA<' in h, "slide 4 labels Boxing / MMA")
     check("Streaming</h3>" not in h, "broadcast modal Streaming section removed")
-    check(h.count("Sky Sports") >= 4, "Sky Sports present on slide + modal")
+    check(h.count("Sky Sports") >= 1, "Sky Sports present on slide 4")
 
     # Every referenced local asset resolves
     refs = set(re.findall(r"""(?:src|href|poster)=["']((?:assets|css|js)/[^"'?]+)""", h))
@@ -597,20 +877,19 @@ def audit():
     # Orphan sweep: every file under assets/ is referenced somewhere
     used = h + c + j
     orphans = [str(p.relative_to(OUT)) for p in (OUT / "assets").rglob("*")
-               if p.is_file() and p.stem not in used and "mrq-blue" not in p.name
-               and p.parent.name != "icons"]
+               if p.is_file() and p.stem not in used and p.parent.name != "icons"]
     check(not orphans, f"no orphan assets ({orphans})")
     print(f"  audit: {len(refs)} asset refs resolved")
 
 
 def stamp_cache_bust():
     css = (OUT / "css" / "styles.css").read_bytes()
-    js = (OUT / "js" / "deck.js").read_bytes()
+    js = (OUT / "js" / "deck.js").read_bytes() + (OUT / "js" / "edit.js").read_bytes()
     v = hashlib.sha256(css + js).hexdigest()[:12]
     p = OUT / "index.html"
     h = p.read_text(encoding="utf-8")
-    h, n = re.subn(r'(css/styles\.css|js/deck\.js)\?v=[0-9a-z]+', lambda m: f"{m.group(1)}?v={v}", h)
-    check(n == 2, f"cache-bust stamped on css + js ({n})")
+    h, n = re.subn(r'(css/styles\.css|js/deck\.js|js/edit\.js)\?v=[0-9a-z]+', lambda m: f"{m.group(1)}?v={v}", h)
+    check(n == 3, f"cache-bust stamped on css + deck.js + edit.js ({n})")
     p.write_text(h, encoding="utf-8")
     print(f"  cache-bust: v={v}")
 
@@ -621,10 +900,13 @@ def main():
     build_logos()
     build_icons()
     build_images()
+    build_photos()
     build_video()
     build_html()
     build_css()
     build_js()
+    build_round4()
+    build_editing()
     audit()
     stamp_cache_bust()
     shutil.copy2(Path(__file__), OUT / "make_mrq.py")

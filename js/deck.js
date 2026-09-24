@@ -1,4 +1,4 @@
-/* PFL × MrQ Activation Strategy 2026 — Navigation logic */
+/* MVP × Mr Q Activation Strategy 2026 — Navigation logic */
 (function () {
   const deck = document.getElementById('deck');
   const slides = Array.from(deck.querySelectorAll('.slide'));
@@ -402,11 +402,11 @@
       'event-night': {
         eyebrow: 'Fighter Generated Content',
         title: 'Event Night',
-        desc: 'MrQ at the centre of fight night — money-can\'t-buy fan experiences and guaranteed PFL star power that put the brand face-to-face with fans at every event.',
+        desc: 'Mr Q at the centre of fight night — money-can\'t-buy fan experiences and guaranteed MVP star power that put the brand face-to-face with fans at every event.',
         videos: [
           {
             src: 'assets/video/event/meet_greet', label: 'Fighter Meet & Greet',
-            vdesc: 'Money-can\'t-buy access for fans and competition winners — signings, photos and face time with PFL stars, delivered as MrQ-branded experiences.'
+            vdesc: 'Money-can\'t-buy access for fans and competition winners — signings, photos and face time with MVP stars, delivered as Mr Q-branded experiences.'
           },
           {
             src: 'assets/video/event/athlete_attendance', label: 'Athlete Attendance',
@@ -418,7 +418,7 @@
         eyebrow: 'Fighter Generated Content',
         title: 'Automated Fight Highlights',
         clickToPlay: true,
-        desc: 'Automated, broadcast-quality highlight packages cut within minutes of every PFL fight — delivered to MrQ to repurpose across owned channels, driving engagement and excitement around every event. All powered by WSC Sports.',
+        desc: 'Automated, broadcast-quality highlight packages cut within minutes of every MVP fight — delivered to Mr Q to repurpose across owned channels, driving engagement and excitement around every event. All powered by WSC Sports.',
         videos: [
           {
             src: 'assets/video/highlights/full_fight_highlights', label: 'Full Fight Highlights',
@@ -426,7 +426,7 @@
           },
           {
             src: 'assets/video/highlights/archive_footage', label: 'Archive Footage',
-            vdesc: 'Classic moments from the PFL vault, ready to repackage around upcoming matchups and storylines.'
+            vdesc: 'Classic moments from the MVP vault, ready to repackage around upcoming matchups and storylines.'
           },
           {
             src: 'assets/video/highlights/knockouts', label: 'Knockouts',
@@ -443,28 +443,28 @@
         title: 'Fighter Face-Offs',
         desc: 'The tension of the staredown, frame by frame. High-impact face-off content built for virality and primed to drive engagement around every marquee matchup.',
         videos: [
-          { src: 'assets/video/fgc/faceoff_dubai', label: 'PFL Dubai' },
-          { src: 'assets/video/fgc/faceoff_madrid', label: 'PFL Madrid' },
-          { src: 'assets/video/fgc/faceoff_paris', label: 'PFL Paris' },
-          { src: 'assets/video/fgc/faceoff_nashville', label: 'PFL Nashville' }
+          { src: 'assets/video/fgc/faceoff_dubai', label: 'MVP Dubai' },
+          { src: 'assets/video/fgc/faceoff_madrid', label: 'MVP Madrid' },
+          { src: 'assets/video/fgc/faceoff_paris', label: 'MVP Paris' },
+          { src: 'assets/video/fgc/faceoff_nashville', label: 'MVP Nashville' }
         ]
       },
       'content-series': {
         eyebrow: 'Fighter Generated Content',
         title: 'Original Content Series',
-        desc: 'Episodic, story-led content following fighters through camp, fight week and beyond — a recurring series that keeps MrQ front and centre between events.',
+        desc: 'Episodic, story-led content following fighters through camp, fight week and beyond — a recurring series that keeps Mr Q front and centre between events.',
         series: [
           {
             label: 'Between Rounds',
             embed: 'https://www.youtube.com/embed/Z56rQeSApBY',
             archive: 'https://www.youtube.com/playlist?list=PL2PVbMNCCWz6W0zBXMa_6jsfIXJFt6iXg',
-            desc: 'Long-form sit-downs with the biggest personalities in the PFL, hosted by Dan Hardy — fighters, coaches, execs, on life, legacy and the stories behind the fights.'
+            desc: 'Long-form sit-downs with the biggest personalities in the MVP, hosted by Dan Hardy — fighters, coaches, execs, on life, legacy and the stories behind the fights.'
           },
           {
-            label: 'PFL Origins',
+            label: 'MVP Origins',
             embed: 'https://www.youtube.com/embed/Yodxdi5O6Ao',
             archive: 'https://www.youtube.com/playlist?list=PL2PVbMNCCWz47LXCXGImUhA4-Y6RBV3Gy',
-            desc: 'Documentary-style storytelling tracing each fighter\'s road to the PFL — where they came from, what they overcame and what drives them.'
+            desc: 'Documentary-style storytelling tracing each fighter\'s road to the MVP — where they came from, what they overcame and what drives them.'
           }
         ]
       }
